@@ -3,12 +3,13 @@ import Footer from "./components/Footer";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from "./pages/Home";
 import About from "./pages/About";
+import Events from "./pages/Events";
+import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
 import Sponsors from "./pages/Sponsors";
 import Login from "./pages/Login";  
 import Register from "./pages/Register";
 import "./App.css";
-import React from "react"; // This line is a duplicate and can be removed.
 
 export default function App() {
   return (
@@ -21,6 +22,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/gallery" element={<Gallery />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/sponsors" element={<Sponsors />} />
             <Route path="/login" element={<Login />} />
