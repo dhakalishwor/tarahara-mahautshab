@@ -125,4 +125,70 @@ class EventController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Register user for an event
+     */
+    public function register(Request $request, $id)
+    {
+        try {
+            $event = Event::findOrFail($id);
+
+            // Check if user already registered
+            $existingRegistration = $event->registrations()
+                ->where('user_id', $request->user()->id)
+                ->first();
+
+            if ($existingRegistration) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are already registered for this event',
+                ], 409);
+            }
+
+            // Check if event has available slots
+            if (!$event->hasAvailableSlots()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event registration is full',
+                ], 422);
+            }
+
+            // Generate unique ticket number
+            $ticketNumber = 'TKT-' . $event->id . '-' . time() . '-' . $request->user()->id;
+
+            // Create registration
+            $registration = $event->registrations()->create([
+                'user_id' => $request->user()->id,
+                'ticket_number' => $ticketNumber,
+                'status' => 'confirmed',
+            ]);
+
+            // Increment registered count
+            $event->increment('registered_count');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Successfully registered for event',
+                'data' => [
+                    'registration_id' => $registration->id,
+                    'ticket_number' => $registration->ticket_number,
+                    'status' => $registration->status,
+                    'event_id' => $event->id,
+                    'event_name' => $event->name,
+                ]
+            ], 201);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Event not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to register for event',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

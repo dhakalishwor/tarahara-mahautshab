@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const EventDetailsPage = ({ eventId }) => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [registrationError, setRegistrationError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchEventDetails();
@@ -23,6 +27,49 @@ const EventDetailsPage = ({ eventId }) => {
       console.error('Error fetching event:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    try {
+      setRegistering(true);
+      setRegistrationError(null);
+      const token = localStorage.getItem('authToken');
+
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.post(
+        `/api/events/${eventId}/register`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      if (response.data.success) {
+        // Update the event's registered count
+        setEvent({
+          ...event,
+          registered_count: event.registered_count + 1,
+          remaining_slots: event.remaining_slots - 1,
+        });
+        // Navigate to dashboard
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      if (err.response?.status === 401) {
+        navigate('/login');
+      } else {
+        setRegistrationError(err.response?.data?.message || 'Failed to register for event');
+      }
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -199,9 +246,19 @@ const EventDetailsPage = ({ eventId }) => {
                 </div>
               </div>
 
+              {registrationError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-700 text-sm">
+                  {registrationError}
+                </div>
+              )}
+
               {event.has_available_slots ? (
-                <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition mb-3">
-                  Register Now
+                <button
+                  onClick={handleRegister}
+                  disabled={registering}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition mb-3 disabled:bg-gray-400"
+                >
+                  {registering ? 'Registering...' : 'Register Now'}
                 </button>
               ) : (
                 <button disabled className="w-full bg-gray-400 text-white font-semibold py-3 rounded-lg cursor-not-allowed">

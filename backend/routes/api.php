@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,9 +29,11 @@ Route::get('/events/{id}', [EventController::class, 'show']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', function (\Illuminate\Http\Request $request) {
-        return $request->user();
-    });
+    Route::get('/user', [UserController::class, 'profile']);
+    Route::put('/user', [UserController::class, 'updateProfile']);
+    
+    // Event registration
+    Route::post('/events/{id}/register', [EventController::class, 'register']);
     
     // Event admin routes
     Route::post('/events', [EventController::class, 'store']);
