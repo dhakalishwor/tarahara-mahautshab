@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RegistrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +35,12 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Event registration
     Route::post('/events/{id}/register', [EventController::class, 'register']);
+    
+    // Ticket routes
+    Route::get('/ticket/{ticketNumber}', [RegistrationController::class, 'getTicket']);
+    Route::post('/ticket/{ticketNumber}/check-in', [RegistrationController::class, 'checkIn']);
+    Route::get('/registrations', [RegistrationController::class, 'getUserRegistrations']);
+    Route::post('/registrations/{ticketNumber}/cancel', [RegistrationController::class, 'cancel']);
     
     // Event admin routes
     Route::post('/events', [EventController::class, 'store']);

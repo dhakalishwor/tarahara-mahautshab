@@ -59,8 +59,8 @@ const EventDetailsPage = ({ eventId }) => {
           registered_count: event.registered_count + 1,
           remaining_slots: event.remaining_slots - 1,
         });
-        // Navigate to dashboard
-        navigate('/dashboard');
+        // Navigate to ticket confirmation page
+        navigate(`/ticket/${response.data.data.ticket_number}`);
       }
     } catch (err) {
       if (err.response?.status === 401) {

@@ -287,13 +287,21 @@ export default function UserDashboardPage() {
                               </p>
                             </div>
 
-                            {/* QR Code Button */}
-                            <button
-                              onClick={() => setShowQRCode(showQRCode === registration.id ? null : registration.id)}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                            >
-                              {showQRCode === registration.id ? 'Hide QR' : 'Show QR'}
-                            </button>
+                            {/* Action Buttons */}
+                            <div className="flex flex-col gap-2">
+                              <button
+                                onClick={() => navigate(`/ticket/${registration.ticket_number}`)}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                              >
+                                View Ticket
+                              </button>
+                              <button
+                                onClick={() => setShowQRCode(showQRCode === registration.id ? null : registration.id)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                              >
+                                {showQRCode === registration.id ? 'Hide QR' : 'Show QR'}
+                              </button>
+                            </div>
                           </div>
 
                           {/* QR Code Display */}
@@ -305,12 +313,6 @@ export default function UserDashboardPage() {
                                 level="H"
                                 includeMargin={true}
                               />
-                              <button
-                                onClick={() => handleDownloadTicket(registration)}
-                                className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                              >
-                                Download Ticket
-                              </button>
                             </div>
                           )}
                         </div>
