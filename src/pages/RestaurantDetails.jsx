@@ -1,69 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-
-const restaurantsData = {
-  1: {
-    id: 1,
-    name: 'Pizza Palace',
-    cuisine: 'Italian',
-    rating: 4.5,
-    deliveryTime: '30-40 min',
-    minOrder: 500,
-    menu: [
-      { id: 101, name: 'Margherita Pizza', price: 550, description: 'Fresh mozzarella, tomato sauce, basil' },
-      { id: 102, name: 'Pepperoni Pizza', price: 650, description: 'Pepperoni, mozzarella, tomato sauce' },
-      { id: 103, name: 'Vegetarian Pizza', price: 600, description: 'Bell peppers, onions, mushrooms, olives' },
-      { id: 104, name: 'BBQ Chicken Pizza', price: 750, description: 'BBQ sauce, chicken, onions, cilantro' },
-    ]
-  },
-  2: {
-    id: 2,
-    name: 'Sushi World',
-    cuisine: 'Japanese',
-    rating: 4.8,
-    deliveryTime: '25-35 min',
-    minOrder: 800,
-    menu: [
-      { id: 201, name: 'California Roll', price: 650, description: 'Crab, avocado, cucumber' },
-      { id: 202, name: 'Salmon Nigiri', price: 850, description: 'Fresh salmon over rice' },
-      { id: 203, name: 'Tuna Sashimi', price: 950, description: 'Fresh tuna slices' },
-      { id: 204, name: 'Dragon Roll', price: 1200, description: 'Eel, cucumber, avocado' },
-    ]
-  },
-  3: {
-    id: 3,
-    name: 'Burger Hub',
-    cuisine: 'American',
-    rating: 4.3,
-    deliveryTime: '20-30 min',
-    minOrder: 300,
-    menu: [
-      { id: 301, name: 'Classic Burger', price: 350, description: 'Beef patty, lettuce, tomato, cheese' },
-      { id: 302, name: 'Cheese Burger', price: 400, description: 'Double cheese, beef patty' },
-      { id: 303, name: 'Chicken Burger', price: 380, description: 'Crispy chicken, mayo, lettuce' },
-      { id: 304, name: 'Veggie Burger', price: 320, description: 'Vegetable patty, special sauce' },
-    ]
-  },
-};
+import { useAuth } from '../context/AuthContext';
+import { restaurantService, menuItemService } from '../services/restaurantService';
 
 export default function RestaurantDetails() {
   const { id } = useParams();
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [notification, setNotification] = useState('');
-  
-  const restaurant = restaurantsData[id];
+  const [restaurant, setRestaurant] = useState(null);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!restaurant) {
-    return (
-      <div className="w-full min-h-screen bg-brown-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold mb-4 text-gray-900">Restaurant Not Found</h2>
-          <Link to="/restaurants" className="text-brown-700 font-semibold hover:underline">Back to Restaurants</Link>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const restData = await restaurantService.getById(id);
+        setRestaurant(restData);
+        const menuData = await menuItemService.getAll(id);
+        setMenuItems(menuData);
+      } catch (error) {
+        console.error('Error fetching restaurant:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   const handleAddToCart = (item) => {
     addToCart({ ...item, restaurantId: restaurant.id, restaurantName: restaurant.name });
@@ -71,45 +36,108 @@ export default function RestaurantDetails() {
     setTimeout(() => setNotification(''), 3000);
   };
 
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!restaurant) {
+    return (
+      <div className="w-full min-h-screen bg-gray-50 flex items-center justify-center font-sans">
+        <div className="text-center bg-white p-12 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full mx-4">
+          <div className="text-6xl mb-6">😕</div>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900">Restaurant Not Found</h2>
+          <p className="text-gray-500 mb-8">This restaurant may have been removed.</p>
+          <Link to="/restaurants" className="inline-block bg-primary text-gray-900 px-8 py-3.5 rounded-full font-bold hover:bg-primary-dark transition-colors w-full shadow-sm">
+            Browse Restaurants
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full min-h-screen bg-brown-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <Link to="/restaurants" className="text-brown-700 font-semibold hover:underline mb-4 inline-block">&larr; Back to Restaurants</Link>
+    <div className="w-full min-h-screen bg-gray-50 pb-16 font-sans">
+      
+      {/* Restaurant Header */}
+      <div className="relative h-[300px] md:h-[400px] bg-gray-900">
+        <div 
+          className="absolute inset-0 opacity-50 bg-cover bg-center"
+          style={{ backgroundImage: `url('${restaurant.image}')` }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
         
+        <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 max-w-7xl mx-auto">
+          <Link to="/restaurants" className="text-white/80 hover:text-white flex items-center gap-2 mb-4 font-semibold text-sm transition-colors">
+            <span>&larr;</span> Back to restaurants
+          </Link>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2">{restaurant.name}</h1>
+              <div className="flex flex-wrap items-center gap-3 text-white/90 text-sm md:text-base font-medium">
+                <span className="bg-white/20 px-2 py-1 rounded backdrop-blur-sm">{restaurant.cuisine}</span>
+                <span className="flex items-center gap-1">📍 {restaurant.address}</span>
+                {restaurant.phone && <span className="flex items-center gap-1">📞 {restaurant.phone}</span>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 mt-8">
         {notification && (
-          <div className="bg-green-50 border-2 border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
-            {notification}
+          <div className="fixed top-24 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg font-semibold flex items-center gap-2 animate-bounce">
+            <span>✅</span> {notification}
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border-2 border-brown-200">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">{restaurant.name}</h1>
-          <div className="flex flex-wrap gap-4 text-gray-600">
-            <span>{restaurant.cuisine} Cuisine</span>
-            <span>⭐ {restaurant.rating}</span>
-            <span>🕒 {restaurant.deliveryTime}</span>
-            <span>Min Order: NPR {restaurant.minOrder}</span>
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900">Menu Items ({menuItems.length})</h2>
+        </div>
+        
+        {menuItems.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-5xl mb-3">🍽️</div>
+            <h3 className="text-xl font-bold text-gray-900">No menu items yet</h3>
+            <p className="text-gray-500 mt-1">This restaurant hasn't added any dishes yet.</p>
           </div>
-        </div>
-
-        <h2 className="text-3xl font-bold mb-6 text-gray-900">Menu</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {restaurant.menu.map(item => (
-            <div key={item.id} className="bg-white rounded-lg shadow-lg hover:shadow-2xl transition p-6 border-2 border-brown-200">
-              <h3 className="text-xl font-bold mb-2 text-gray-900">{item.name}</h3>
-              <p className="text-gray-600 mb-4">{item.description}</p>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold text-brown-700">NPR {item.price}</span>
-                <button
-                  onClick={() => handleAddToCart(item)}
-                  className="bg-brown-700 text-white px-6 py-2 rounded-lg hover:bg-brown-800 transition font-semibold"
-                >
-                  Add to Cart
-                </button>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            {menuItems.map(item => (
+              <div key={item.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex overflow-hidden h-[160px]">
+                
+                <div className="flex-1 p-4 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{item.name}</h3>
+                    <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">{item.description}</p>
+                  </div>
+                  
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-lg font-bold text-gray-900">NPR {item.price}</span>
+                    {(!user || user.role === 'customer') && (
+                      <button
+                        onClick={() => handleAddToCart(item)}
+                        className="bg-gray-100 text-gray-900 hover:bg-primary hover:text-gray-900 p-2 rounded-full transition-colors flex items-center justify-center w-10 h-10 shadow-sm border border-gray-200"
+                        title="Add to Cart"
+                      >
+                        <span className="text-xl leading-none font-bold">+</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                {item.image && (
+                  <div className="w-[140px] md:w-[160px] h-full flex-shrink-0">
+                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

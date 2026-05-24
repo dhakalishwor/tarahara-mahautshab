@@ -11,7 +11,7 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -25,83 +25,84 @@ export default function Register() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
-    const userData = {
-      id: Date.now(),
-      name: name,
-      email: email,
-      role: 'customer'
-    };
-
-    register(userData);
-    localStorage.setItem('token', 'demo-token-' + Date.now());
-    navigate('/');
+    try {
+      await register(name, email, password, confirmPassword, 'customer');
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || err.response?.data?.errors?.email?.[0] || 'Registration failed');
+    }
   };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 py-10 px-4">
-      <div className="max-w-md w-full p-8 bg-white shadow-lg rounded-lg">
-        <h2 className="text-3xl font-bold mb-6 text-center text-orange-600">Create Account</h2>
+    <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 font-sans">
+      <div className="max-w-md w-full p-8 bg-white shadow-sm border border-gray-100 rounded-2xl">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">Create Account</h2>
+          <p className="text-gray-500 mt-2 text-sm">Join us to order delicious food</p>
+        </div>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm font-medium flex items-center gap-2">
+            <span>⚠️</span> {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 mb-2">Full Name</label>
+            <label className="block text-gray-700 font-bold text-sm mb-2">Full Name</label>
             <input 
               type="text" 
               placeholder="Enter your name" 
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-600" 
+              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-gray-900" 
             />
           </div>
           <div>
-            <label className="block text-gray-700 mb-2">Email</label>
+            <label className="block text-gray-700 font-bold text-sm mb-2">Email Address</label>
             <input 
               type="email" 
               placeholder="Enter your email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-600" 
+              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-gray-900" 
             />
           </div>
           <div>
-            <label className="block text-gray-700 mb-2">Password</label>
+            <label className="block text-gray-700 font-bold text-sm mb-2">Password</label>
             <input 
               type="password" 
-              placeholder="Enter your password" 
+              placeholder="Create a password (min 8 chars)" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-600" 
+              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-gray-900" 
             />
           </div>
           <div>
-            <label className="block text-gray-700 mb-2">Confirm Password</label>
+            <label className="block text-gray-700 font-bold text-sm mb-2">Confirm Password</label>
             <input 
               type="password" 
               placeholder="Confirm your password" 
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-600" 
+              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-gray-900" 
             />
           </div>
-          <button type="submit" className="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transition font-semibold">
-            Create Account
+          <button type="submit" className="w-full bg-primary text-gray-900 p-4 rounded-xl hover:bg-primary-dark transition-all font-bold shadow-sm active:scale-[0.98] mt-4">
+            Sign Up
           </button>
         </form>
 
-        <p className="text-center mt-6 text-gray-600">
-          Already have an account? <Link to="/login" className="text-orange-600 hover:underline">Login</Link>
-        </p>
+        <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+          <p className="text-gray-600 text-sm">
+            Already have an account? <Link to="/login" className="text-primary-dark font-bold hover:underline ml-1">Login</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

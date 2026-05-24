@@ -7,19 +7,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#8B4513',
-        secondary: '#654321',
-        brown: {
-          50: '#fdf8f6',
-          100: '#f2e8e5',
-          200: '#eaddd7',
-          300: '#e0cec7',
-          400: '#d2bab0',
-          500: '#bfa094',
-          600: '#a18072',
-          700: '#977669',
-          800: '#846358',
-          900: '#43302b',
+        primary: {
+          DEFAULT: '#FFCB05', // Foodmandu yellow
+          dark: '#E6B705',
+          light: '#FFDB4D',
+        },
+        secondary: '#1A1A1A',
+        gray: {
+          50: '#F9FAFB',
+          100: '#F3F4F6',
+          200: '#E5E7EB',
+          300: '#D1D5DB',
+          400: '#9CA3AF',
+          500: '#6B7280',
+          600: '#4B5563',
+          700: '#374151',
+          800: '#1F2937',
+          900: '#111827',
         },
       },
     },

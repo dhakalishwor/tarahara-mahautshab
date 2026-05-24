@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
@@ -12,17 +13,29 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const { user } = useAuth();
 
+  // Get a user-specific storage key
+  const getCartKey = () => {
+    return user ? `cart_${user.id}` : 'cart_guest';
+  };
+
+  // Load cart when user changes (login/logout)
   useEffect(() => {
-    const storedCart = localStorage.getItem('cart');
+    const key = getCartKey();
+    const storedCart = localStorage.getItem(key);
     if (storedCart) {
       setCartItems(JSON.parse(storedCart));
+    } else {
+      setCartItems([]);
     }
-  }, []);
+  }, [user]);
 
+  // Save cart whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    const key = getCartKey();
+    localStorage.setItem(key, JSON.stringify(cartItems));
+  }, [cartItems, user]);
 
   const addToCart = (item) => {
     setCartItems(prev => {

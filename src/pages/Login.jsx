@@ -9,7 +9,7 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -18,64 +18,72 @@ export default function Login() {
       return;
     }
 
-    const userData = {
-      id: 1,
-      name: email.split('@')[0],
-      email: email,
-      role: email.includes('admin') ? 'admin' : email.includes('delivery') ? 'delivery' : 'customer'
-    };
-
-    login(userData);
-    localStorage.setItem('token', 'demo-token-' + Date.now());
-    navigate('/');
+    try {
+      const userData = await login(email, password);
+      // Redirect based on role
+      if (userData?.user?.role === 'admin') {
+        navigate('/admin');
+      } else if (userData?.user?.role === 'delivery') {
+        navigate('/delivery');
+      } else {
+        navigate('/');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+    }
   };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-brown-50 to-brown-100 py-12 px-4">
-      <div className="max-w-md w-full p-8 bg-white shadow-2xl rounded-xl border-2 border-brown-200">
+    <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 font-sans">
+      <div className="max-w-md w-full p-8 bg-white shadow-sm border border-gray-100 rounded-2xl">
         <div className="text-center mb-8">
-          <div className="inline-block bg-brown-700 p-4 rounded-full mb-4">
-            <span className="text-5xl">🍔</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary text-gray-900 rounded-full mb-4 shadow-sm">
+            <span className="text-3xl">🍔</span>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-          <p className="text-gray-600 mt-2">Login to your account</p>
+          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">Welcome Back</h2>
+          <p className="text-gray-500 mt-2 text-sm">Login to order your favorite food</p>
         </div>
         
         {error && (
-          <div className="bg-red-50 border-2 border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm font-medium flex items-center gap-2">
+            <span>⚠️</span> {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Email</label>
+            <label className="block text-gray-700 font-bold text-sm mb-2">Email Address</label>
             <input 
               type="email" 
               placeholder="Enter your email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border-2 border-brown-200 rounded-lg focus:outline-none focus:border-brown-600" 
+              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-gray-900" 
             />
           </div>
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Password</label>
+            <div className="flex justify-between items-center mb-2">
+               <label className="block text-gray-700 font-bold text-sm">Password</label>
+               <a href="#" className="text-xs text-primary-dark font-semibold hover:underline">Forgot password?</a>
+            </div>
             <input 
               type="password" 
               placeholder="Enter your password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border-2 border-brown-200 rounded-lg focus:outline-none focus:border-brown-600" 
+              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-gray-900" 
             />
           </div>
-          <button type="submit" className="w-full bg-brown-700 text-white p-3 rounded-lg hover:bg-brown-800 transition font-semibold text-lg shadow-lg">
+          <button type="submit" className="w-full bg-gray-900 text-white p-4 rounded-xl hover:bg-gray-800 transition-all font-bold shadow-md active:scale-[0.98] mt-2">
             Login
           </button>
         </form>
 
-        <p className="text-center mt-6 text-gray-600">
-          Don't have an account? <Link to="/register" className="text-brown-700 font-semibold hover:underline">Sign Up</Link>
-        </p>
+        <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+          <p className="text-gray-600 text-sm">
+            Don't have an account? <Link to="/register" className="text-primary-dark font-bold hover:underline ml-1">Sign Up</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

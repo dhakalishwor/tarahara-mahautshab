@@ -1,92 +1,124 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-
-const allRestaurants = [
-  { id: 1, name: 'Pizza Palace', cuisine: 'Italian', category: 'Pizza', rating: 4.5, deliveryTime: '30-40 min', minOrder: 500 },
-  { id: 2, name: 'Sushi World', cuisine: 'Japanese', category: 'Sushi', rating: 4.8, deliveryTime: '25-35 min', minOrder: 800 },
-  { id: 3, name: 'Burger Hub', cuisine: 'American', category: 'Burger', rating: 4.3, deliveryTime: '20-30 min', minOrder: 300 },
-  { id: 4, name: 'Dragon Wok', cuisine: 'Chinese', category: 'Chinese', rating: 4.6, deliveryTime: '35-45 min', minOrder: 600 },
-  { id: 5, name: 'Spice Route', cuisine: 'Indian', category: 'Indian', rating: 4.7, deliveryTime: '30-40 min', minOrder: 500 },
-  { id: 6, name: 'Sweet Dreams', cuisine: 'Bakery', category: 'Dessert', rating: 4.9, deliveryTime: '15-25 min', minOrder: 250 },
-];
+import { restaurantService } from '../services/restaurantService';
 
 export default function RestaurantList() {
   const [searchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All');
-  const [filteredRestaurants, setFilteredRestaurants] = useState(allRestaurants);
-
-  const categories = ['All', 'Pizza', 'Burger', 'Sushi', 'Chinese', 'Indian', 'Dessert'];
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [selectedCuisine, setSelectedCuisine] = useState('All');
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let results = allRestaurants;
+    const fetchRestaurants = async () => {
+      try {
+        setLoading(true);
+        const data = await restaurantService.getAll();
+        setRestaurants(data);
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRestaurants();
+  }, []);
 
-    if (selectedCategory !== 'All') {
-      results = results.filter(r => r.category === selectedCategory);
-    }
+  // Get unique cuisines from DB data
+  const cuisines = ['All', ...new Set(restaurants.map(r => r.cuisine))];
 
-    if (searchTerm) {
-      results = results.filter(r => 
-        r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.cuisine.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+  const filteredRestaurants = restaurants.filter(r => {
+    const matchesCuisine = selectedCuisine === 'All' || r.cuisine === selectedCuisine;
+    const matchesSearch = !searchTerm ||
+      r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.cuisine.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCuisine && matchesSearch;
+  });
 
-    setFilteredRestaurants(results);
-  }, [searchTerm, selectedCategory]);
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full min-h-screen bg-brown-50 py-8 px-4">
+    <div className="w-full min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-gray-900">All Restaurants</h1>
+        <h1 className="text-3xl font-bold mb-8 text-gray-900">All Restaurants</h1>
         
-        <div className="mb-8 flex flex-col md:flex-row gap-4">
-          <input 
-            type="text" 
-            placeholder="Search restaurants..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 p-3 border-2 border-brown-200 rounded-lg focus:outline-none focus:border-brown-600"
-          />
+        <div className="mb-8 flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex-1 flex items-center border border-gray-200 rounded-lg px-3 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+            <span className="text-gray-400 mr-2">🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search restaurants or cuisines..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full outline-none text-gray-700 bg-transparent"
+            />
+          </div>
           
-          <select 
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="p-3 border-2 border-brown-200 rounded-lg focus:outline-none focus:border-brown-600 bg-white"
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          <div className="flex items-center border border-gray-200 rounded-lg px-3 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all bg-white min-w-[200px]">
+            <span className="text-gray-400 mr-2">🍽️</span>
+            <select 
+              value={selectedCuisine}
+              onChange={(e) => setSelectedCuisine(e.target.value)}
+              className="w-full outline-none text-gray-700 bg-transparent cursor-pointer"
+            >
+              {cuisines.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {filteredRestaurants.length === 0 ? (
-          <p className="text-center text-gray-500 py-16">No restaurants found</p>
+          <div className="text-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <span className="text-6xl mb-4 block">🍽️</span>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">No restaurants found</h2>
+            <p className="text-gray-500">Try adjusting your search or category filter.</p>
+            <button 
+              onClick={() => { setSearchTerm(''); setSelectedCuisine('All'); }}
+              className="mt-6 text-primary-dark font-bold hover:underline"
+            >
+              Clear filters
+            </button>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredRestaurants.map(restaurant => (
               <Link 
                 key={restaurant.id} 
                 to={`/restaurant/${restaurant.id}`}
-                className="bg-white rounded-lg shadow-lg hover:shadow-2xl transition overflow-hidden border-2 border-brown-200"
+                className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden border border-gray-100 group flex flex-col h-full"
               >
-                <div className="h-48 bg-gradient-to-br from-brown-400 to-brown-700 flex items-center justify-center">
-                  <span className="text-8xl">
-                    {restaurant.category === 'Pizza' ? '🍕' : 
-                     restaurant.category === 'Burger' ? '🍔' :
-                     restaurant.category === 'Sushi' ? '🍣' :
-                     restaurant.category === 'Chinese' ? '🥡' :
-                     restaurant.category === 'Indian' ? '🍛' : '🍰'}
-                  </span>
+                <div className="h-48 relative overflow-hidden">
+                  {restaurant.image ? (
+                    <img 
+                      src={restaurant.image} 
+                      alt={restaurant.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-4xl">🏪</div>
+                  )}
+                  {!restaurant.is_active && (
+                    <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-sm">
+                      CLOSED
+                    </div>
+                  )}
                 </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 text-gray-900">{restaurant.name}</h3>
-                  <p className="text-gray-600 mb-3">{restaurant.cuisine}</p>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-brown-700 font-semibold">⭐ {restaurant.rating}</span>
-                    <span className="text-gray-500 text-sm">{restaurant.deliveryTime}</span>
+                
+                <div className="p-4 flex flex-col flex-grow">
+                  <h3 className="text-xl font-bold text-gray-900 mb-1 truncate">{restaurant.name}</h3>
+                  <p className="text-gray-500 text-sm mb-4 line-clamp-1">{restaurant.cuisine}</p>
+                  
+                  <div className="mt-auto flex items-center justify-between text-sm text-gray-600 border-t border-gray-100 pt-3">
+                    <span className="font-medium">{restaurant.address}</span>
+                    <span className="font-medium">{restaurant.menu_items_count || restaurant.menu_items?.length || 0} items</span>
                   </div>
-                  <p className="text-gray-500 text-sm">Min Order: NPR {restaurant.minOrder}</p>
                 </div>
               </Link>
             ))}
